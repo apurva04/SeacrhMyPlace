@@ -3,204 +3,197 @@
 
 <head>
 
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
 
- 
+
 </head>
 
-<body  ng-app="myApp" ng-controller="ctrl">
-<div class="containner">
-    <h1>Search My Place App</h1>
-    <h2>I am from  vs code hello</h2>
-</div>
-<div id="googleMap" style="width:100%;height:200px;" class="container"></div>
+<body ng-app="myApp" ng-controller="ctrl">
+    <div class="containner">
+        <h1>Search My Place App</h1>
+        <h2>I am from vs code hello</h2>
+    </div>
+    <div id="googleMap" style="width:100%;height:200px;" class="container"></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
 
-<script>
+    <script>
+        var app = angular.module('myApp', []);
 
-var app=angular.module('myApp',[]);
+        app.controller('ctrl', function ($scope) {
 
-app.controller('ctrl',function($scope){
+            $scope.details = {};
 
-    $scope.details={};
+        });
 
-});
+        app.directive('ngAuntoComplete', function () {
 
-app.directive('ngAuntoComplete',function(){
+            return {
 
-    return{
+                link: function (scope, element, attr, ctrl) {
 
-        link:function(scope,element,attr,ctrl){
+                    function initialize() {
 
-            function initialize() {
+                        var address = (document.getElementById('pac-input'));
 
-                var address = (document.getElementById('pac-input'));
+                        var autocomplete = new google.maps.places.Autocomplete(address);
 
-                var autocomplete = new google.maps.places.Autocomplete(address);
+                        autocomplete.setTypes(['geocode']);
 
-                autocomplete.setTypes(['geocode']);
+                        var lat = 0;
 
-                var lat=0;
+                        var lng = 0;
 
-                var lng=0;
+                        google.maps.event.addListener(autocomplete, 'place_changed', function () {
 
-                google.maps.event.addListener(autocomplete, 'place_changed', function() {
+                            var place = autocomplete.getPlace();
 
-                    var place = autocomplete.getPlace();
+                            if (!place.geometry) {
 
-                    if (!place.geometry) {
+                                return;
 
-                        return;
+                            }
+
+                            lat = place.geometry.location.lat();
+
+                            lng = place.geometry.location.lng();
+
+                            myMap(lat, lng, place.place_id);
+
+                        });
 
                     }
 
-                    lat=place.geometry.location.lat();
+                    initialize();
 
-                    lng=place.geometry.location.lng();
+                    function myMap(lat, lng, id) {
 
-                    myMap(lat,lng,place.place_id);
+                        var mapProp = {
 
-                });
+                            center: new google.maps.LatLng(lat, lng),
 
-            }
+                            zoom: 7,
 
-            initialize();
+                        };
 
-            function myMap(lat,lng,id) {
+                        var request = {
 
-            var mapProp= {
+                            placeId: id
 
-                center:new google.maps.LatLng(lat,lng),
+                        };
 
-                zoom:7,
+                        var map = new google.maps.Map(document.getElementById("googleMap"), mapProp);
 
-            };
+                        service = new google.maps.places.PlacesService(map);
 
-            var request = {
+                        service.getDetails(request, callback);
 
-              placeId:id
+                        function callback(place, status) {
 
-            };
-
-            var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
-
-            service = new google.maps.places.PlacesService(map);
-
-            service.getDetails(request, callback);
-
-            function callback(place, status) {
-
-                if (status == google.maps.places.PlacesServiceStatus.OK) {
+                            if (status == google.maps.places.PlacesServiceStatus.OK) {
 
 
 
-                  scope.$apply(function(){
+                                scope.$apply(function () {
 
-                      scope.details.address =place.formatted_address;
-                      scope.details.photo=[];
-                      scope.details.placeId=place.place_id;
-                      scope.details.lat=lat;
-                      scope.details.lng=lng;
-                      scope.details.noOfPhoto=place.photos.length;
+                                    scope.details.address = place.formatted_address;
+                                    scope.details.photo = [];
+                                    scope.details.placeId = place.place_id;
+                                    scope.details.lat = lat;
+                                    scope.details.lng = lng;
+                                    scope.details.noOfPhoto = place.photos.length;
 
-                      for (var i=0;i<place.photos.length;i++){
-                        scope.details.photo.push(place.photos[i].getUrl({
-                             maxwidth: 100,
-                             maxHeight: 100
-                        }));
+                                    for (var i = 0; i < place.photos.length; i++) {
+                                        scope.details.photo.push(place.photos[i].getUrl({
+                                            maxwidth: 100,
+                                            maxHeight: 100
+                                        }));
 
-                      }
+                                    }
 
-                    });
+                                });
+
+                            }
+
+                        }
+
+                    }
+
+                    //link end
 
                 }
 
             }
 
-            }
 
-        //link end
+        });
 
-        }
+    </script>
 
-    }
+    <div class="container">
+        <table class="table">
+            <tr>
+                <td>
+                    <input id="pac-input" ng-aunto-complete ng-model="plcInput" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Address
+                </td>
+                <td>
+                    {{details.address}}
+                </td>
 
+            </tr>
+            <tr>
+                <td>
+                    Place ID:
+                </td>
+                <td>
+                    {{details.placeId}}
+                </td>
 
-});
+            </tr>
+            <tr>
+                <td>
+                    Lattitude:
+                </td>
+                <td>
+                    {{details.lat}}
+                </td>
 
+            </tr>
+            <tr>
+                <td>
+                    Longitude:
+                </td>
+                <td>
+                    {{details.lng}}
+                </td>
 
+            </tr>
+            <tr>
+                <td>
+                    No Of photos Available:
+                </td>
+                <td>
+                    {{details.noOfPhoto}}
+                </td>
 
+            </tr>
+            <tr ng-repeat="img in details.photo">
+                <td>
+                    <img src="{{img}}" />
+                </td>
+            </tr>
+        </table>
 
+        
 
-
-
-</script>
-
-<div class="container">
-<table class="table">
-<tr>
- <td>
-  <input id="pac-input" ng-aunto-complete  ng-model="plcInput"/>
- </td>
-</tr>
-<tr>
- <td>
-  Address
- </td>
- <td>
-  {{details.address}}
- </td>
-
-</tr>
-<tr>
- <td>
-  Place ID:
- </td>
- <td>
-  {{details.placeId}}
- </td>
-
-</tr>
-<tr>
- <td>
-  Lattitude:
- </td>
- <td>
-  {{details.lat}}
- </td>
-
-</tr>
-<tr>
- <td>
-  Longitude:
- </td>
- <td>
-  {{details.lng}}
- </td>
-
-</tr>
-<tr>
- <td>
-  No Of photos Available:
- </td>
- <td>
-  {{details.noOfPhoto}}
- </td>
-
-</tr>
-<tr ng-repeat="img in details.photo">
- <td>
-  <img   src="{{img}}" />
- </td>
-</tr>
-</table>
-
-kkk
-
-</div>
+    </div>
 
 
 </body>
